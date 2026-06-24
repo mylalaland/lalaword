@@ -1,0 +1,139 @@
+/* ============================================
+   LalaWord Design Tokens
+   Warm Coral + Teal theme
+   ============================================ */
+
+:root {
+  /* === Primary Colors === */
+  --color-coral: #E8664A;
+  --color-coral-hover: #D4583E;
+  --color-coral-active: #C04D35;
+  --color-coral-light: #FFF0EC;
+  --color-coral-50: #FEF3F0;
+  --color-coral-100: #FDDDD5;
+  --color-coral-200: #F9B8A8;
+
+  /* === Secondary Colors === */
+  --color-teal: #2A9D8F;
+  --color-teal-hover: #238B7F;
+  --color-teal-active: #1D7A70;
+  --color-teal-light: #E6F5F3;
+  --color-teal-50: #F0FAF8;
+  --color-teal-100: #D1F0EB;
+
+  /* === Accent Colors === */
+  --color-amber: #E9A23B;
+  --color-amber-hover: #D89430;
+  --color-amber-light: #FFF6E5;
+  --color-amber-50: #FFFBF0;
+
+  --color-sky: #4A90D9;
+  --color-sky-hover: #3E7FC4;
+  --color-sky-light: #EBF3FC;
+
+  --color-rose: #D4637A;
+  --color-rose-light: #FCEEF1;
+
+  --color-green: #5CB85C;
+  --color-green-light: #EFF8EF;
+
+  /* === Neutral Colors === */
+  --color-white: #FFFFFF;
+  --color-bg: #FAFAF8;
+  --color-bg-warm: #F7F4F0;
+  --color-sand: #F5EDE3;
+  --color-border: #E8E8E4;
+  --color-border-light: #F0F0EC;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #5A5A5A;
+  --color-text-muted: #8E8E8E;
+  --color-text-hint: #B0B0B0;
+  --color-overlay: rgba(0, 0, 0, 0.4);
+
+  /* === Level Colors === */
+  --color-level-1: #5CB85C;  /* 씨앗 - 유치원 */
+  --color-level-2: #2A9D8F;  /* 새싹 - 초등 저 */
+  --color-level-3: #4A90D9;  /* 나무 - 초등 고 */
+  --color-level-4: #E9A23B;  /* 별 - 중학생 */
+  --color-level-5: #E8664A;  /* 로켓 - 고등학생 */
+  --color-level-6: #D4637A;  /* 왕관 - 고급/성인 */
+
+  /* === Typography === */
+  --font-kr: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-en: 'Outfit', 'Noto Sans KR', sans-serif;
+  --font-mono: 'Consolas', 'Monaco', monospace;
+
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-3xl: 28px;
+  --text-4xl: 36px;
+
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  --line-tight: 1.3;
+  --line-normal: 1.5;
+  --line-relaxed: 1.7;
+  --line-loose: 1.9;
+
+  /* === Spacing === */
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 20px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 40px;
+  --space-4xl: 48px;
+  --space-5xl: 64px;
+
+  /* === Border Radius === */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* === Shadows === */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 12px 36px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  /* === Z-Index === */
+  --z-base: 1;
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-fixed: 30;
+  --z-modal-backdrop: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+  --z-tooltip: 70;
+
+  /* === Transitions === */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+  --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* === Layout === */
+  --header-height: 56px;
+  --tab-bar-height: 64px;
+  --content-max-width: 480px;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}

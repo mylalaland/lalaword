@@ -1,0 +1,17 @@
+# Android
+android-app/
+*.apk
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node
+node_modules/

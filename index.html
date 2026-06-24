@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#FAFAF8">
+  <meta name="description" content="LalaWord - 영어 책을 스캔하면 단어를 알려주는 스마트 영어 학습 앱">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>LalaWord</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- Dexie.js (IndexedDB wrapper) -->
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.7/dist/dexie.min.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    /* Desktop background */
+    @media (min-width: 481px) {
+      body {
+        background: linear-gradient(135deg, #FFF5F0 0%, #F0F7F6 50%, #FFF8F0 100%);
+        min-height: 100vh;
+      }
+      #app {
+        box-shadow: 0 0 40px rgba(0,0,0,0.06);
+        border-left: 1px solid rgba(0,0,0,0.04);
+        border-right: 1px solid rgba(0,0,0,0.04);
+        min-height: 100vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left"></div>
+      <div class="header-title" style="font-family:var(--font-en);color:var(--color-coral);font-weight:800;letter-spacing:-0.5px;">
+        Lala<span style="color:var(--color-text-primary);font-weight:600;">Word</span>
+      </div>
+      <button class="header-right" onclick="Router.navigate('/settings')">⚙️</button>
+    </header>
+
+    <!-- Pages -->
+    <main>
+      <!-- Home -->
+      <div class="page active" id="page-home">
+        <div class="page-content">
+          <!-- Rendered by HomePage.render() -->
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;">
+            <div class="loading-dots"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera -->
+      <div class="page fullscreen" id="page-camera">
+        <!-- Rendered by CameraPage.render() -->
+      </div>
+
+      <!-- Scan Result -->
+      <div class="page" id="page-scan-result">
+        <div class="page-content"></div>
+      </div>
+
+      <!-- Vocabulary -->
+      <div class="page" id="page-vocabulary">
+        <div class="page-content"></div>
+      </div>
+
+      <!-- Flashcard -->
+      <div class="page" id="page-flashcard">
+        <div class="page-content"></div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="page" id="page-quiz">
+        <div class="page-content"></div>
+      </div>
+
+      <!-- Records -->
+      <div class="page" id="page-records">
+        <div class="page-content"></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="page" id="page-settings">
+        <div class="page-content"></div>
+      </div>
+
+      <!-- Parent Settings -->
+      <div class="page" id="page-parent-settings">
+        <div class="page-content"></div>
+      </div>
+    </main>
+
+    <!-- Tab Bar -->
+    <nav class="tab-bar">
+      <button class="tab-item active" data-path="/home">
+        <span class="tab-icon">🏠</span>
+        <span class="tab-label">홈</span>
+      </button>
+      <button class="tab-item" data-path="/vocabulary">
+        <span class="tab-icon">📖</span>
+        <span class="tab-label">단어장</span>
+      </button>
+      <button class="tab-item" data-path="/camera" style="position:relative;">
+        <span class="tab-icon" style="width:48px;height:48px;background:var(--color-coral);
+          border-radius:50%;display:flex;align-items:center;justify-content:center;
+          position:absolute;top:-20px;box-shadow:0 4px 12px rgba(232,102,74,0.3);
+          font-size:24px;color:#fff;">📷</span>
+        <span class="tab-label" style="margin-top:24px;">스캔</span>
+      </button>
+      <button class="tab-item" data-path="/records">
+        <span class="tab-icon">📊</span>
+        <span class="tab-label">기록</span>
+      </button>
+      <button class="tab-item" data-path="/settings">
+        <span class="tab-icon">⚙️</span>
+        <span class="tab-label">설정</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- Core JS -->
+  <script src="js/core/utils.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/core/db.js"></script>
+  <script src="js/core/api.js"></script>
+  <script src="js/router.js"></script>
+
+  <!-- Components -->
+  <script src="js/components/toast.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/loading.js"></script>
+  <script src="js/components/pin-input.js"></script>
+
+  <!-- Services -->
+  <script src="js/services/speech-service.js"></script>
+  <script src="js/services/spaced-repetition.js"></script>
+  <script src="js/services/quiz-engine.js"></script>
+
+  <!-- Pages -->
+  <script src="js/pages/home.js"></script>
+  <script src="js/pages/camera.js"></script>
+  <script src="js/pages/scan-result.js"></script>
+  <script src="js/pages/vocabulary.js"></script>
+  <script src="js/pages/flashcard.js"></script>
+  <script src="js/pages/quiz.js"></script>
+  <script src="js/pages/records.js"></script>
+  <script src="js/pages/settings.js"></script>
+  <script src="js/pages/parent-settings.js"></script>
+
+  <!-- App Init (must be last) -->
+  <script src="js/app.js"></script>
+</body>
+</html>
