@@ -120,21 +120,21 @@ const FlashcardPage = (() => {
 
         <!-- Rating buttons (only when flipped) -->
         ${isFlipped ? `
-          <div style="padding:12px 24px 8px;display:flex;gap:10px;">
+          <div style="padding:12px 24px 8px;display:flex;gap:10px;max-width:400px;margin:0 auto;width:100%;box-sizing:border-box;">
             <button onclick="FlashcardPage.rate(1)" class="btn btn-block"
-              style="background:var(--color-rose-light);color:var(--color-rose);flex:1;">
+              style="background:var(--color-rose-light);color:var(--color-rose);flex:1;min-width:0;">
               ❌ 몰라요
             </button>
             <button onclick="FlashcardPage.rate(3)" class="btn btn-block"
-              style="background:var(--color-amber-light);color:var(--color-amber);flex:1;">
+              style="background:var(--color-amber-light);color:var(--color-amber);flex:1;min-width:0;">
               🤔 헷갈려요
             </button>
             <button onclick="FlashcardPage.rate(4)" class="btn btn-block"
-              style="background:var(--color-teal-light);color:var(--color-teal);flex:1;">
+              style="background:var(--color-teal-light);color:var(--color-teal);flex:1;min-width:0;">
               😊 알아요
             </button>
             <button onclick="FlashcardPage.rate(5)" class="btn btn-block"
-              style="background:var(--color-sky-light);color:var(--color-sky);flex:1;">
+              style="background:var(--color-sky-light);color:var(--color-sky);flex:1;min-width:0;">
               ⭐ 완벽!
             </button>
           </div>

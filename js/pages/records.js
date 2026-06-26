@@ -278,23 +278,28 @@ const RecordsPage = (() => {
       return;
     }
 
-    container.innerHTML = results.map(r => `
-      <div class="card mb-xs">
-        <div class="flex-between">
-          <div>
-            <div style="font-size:14px;font-weight:600;">
-              ${r.correctCount}/${r.totalQuestions} 정답
-              ${r.correctCount === r.totalQuestions ? ' 🎉' : ''}
+    container.innerHTML = results.map(r => {
+      const correct = r.correct ?? r.correctCount ?? 0;
+      const total = r.total ?? r.totalQuestions ?? 1;
+      const pct = Utils.percentage(correct, total);
+      return `
+        <div class="card mb-xs">
+          <div class="flex-between">
+            <div>
+              <div style="font-size:14px;font-weight:600;">
+                ${correct}/${total} 정답
+                ${correct === total ? ' 🎉' : ''}
+              </div>
+              <div style="font-size:12px;color:var(--color-text-muted);">${Utils.formatDate(r.date)}</div>
             </div>
-            <div style="font-size:12px;color:var(--color-text-muted);">${Utils.formatDate(r.date)}</div>
-          </div>
-          <div style="font-family:var(--font-en);font-size:18px;font-weight:800;
-            color:${Utils.percentage(r.correctCount, r.totalQuestions) >= 80 ? 'var(--color-green)' : 'var(--color-amber)'};">
-            ${Utils.percentage(r.correctCount, r.totalQuestions)}%
+            <div style="font-family:var(--font-en);font-size:18px;font-weight:800;
+              color:${pct >= 80 ? 'var(--color-green)' : 'var(--color-amber)'};">
+              ${pct}%
+            </div>
           </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   function prevMonth() {
