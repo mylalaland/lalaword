@@ -95,23 +95,107 @@ const CameraPage = (() => {
 
   async function startCamera() {
     try {
+      // Check if mediaDevices is available (not available on http:// in some browsers)
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('mediaDevices not available');
+      }
       stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
       });
       const video = document.getElementById('camera-video');
       if (video) {
         video.srcObject = stream;
-        // Hide tips after first interaction
         setTimeout(() => {
           const tips = document.getElementById('camera-tips');
           if (tips) tips.style.opacity = '0';
         }, 3000);
       }
     } catch (err) {
-      console.error('Camera error:', err);
-      Toast.error('카메라를 사용하려면 권한이 필요해요. 설정에서 허용해주세요');
-      setTimeout(() => Router.navigate('/home'), 2000);
+      console.warn('Camera unavailable:', err.message);
+      showGalleryFallback();
     }
+  }
+
+  function showGalleryFallback() {
+    const video = document.getElementById('camera-video');
+    if (video) video.style.display = 'none';
+
+    const tips = document.getElementById('camera-tips');
+    if (tips) {
+      tips.style.opacity = '1';
+      tips.innerHTML = `
+        <div style="font-size:48px;margin-bottom:16px;">📷</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:8px;">카메라를 사용할 수 없어요</div>
+        <div style="font-size:13px;opacity:0.8;margin-bottom:20px;">
+          PC에서는 아래 영역에 이미지를 드래그하거나<br>🖼️ 버튼으로 사진을 선택해주세요
+        </div>
+      `;
+    }
+
+    // Replace capture button with a file input trigger
+    const captureBtn = document.getElementById('capture-btn');
+    if (captureBtn) {
+      captureBtn.onclick = () => document.getElementById('gallery-input')?.click();
+      captureBtn.innerHTML = '<div style="font-size:24px;">📁</div>';
+      captureBtn.style.background = 'var(--color-coral)';
+    }
+
+    // Add drag & drop zone
+    const container = video?.parentElement;
+    if (container) {
+      const dropZone = document.createElement('div');
+      dropZone.id = 'drop-zone';
+      dropZone.style.cssText = `
+        position:absolute;inset:80px 24px 180px;
+        border:2px dashed rgba(255,255,255,0.4);border-radius:16px;
+        display:flex;align-items:center;justify-content:center;
+        color:rgba(255,255,255,0.5);font-size:14px;z-index:4;
+        transition:border-color 200ms, background 200ms;
+      `;
+      dropZone.textContent = '이미지를 여기에 드래그 & 드롭';
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--color-coral)';
+        dropZone.style.background = 'rgba(255,107,107,0.1)';
+      });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = 'rgba(255,255,255,0.4)';
+        dropZone.style.background = 'transparent';
+      });
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'rgba(255,255,255,0.4)';
+        dropZone.style.background = 'transparent';
+        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+        if (files.length > 0) {
+          handleDroppedFiles(files);
+        }
+      });
+
+      // Also handle click on drop zone
+      dropZone.addEventListener('click', () => document.getElementById('gallery-input')?.click());
+      dropZone.style.cursor = 'pointer';
+
+      container.appendChild(dropZone);
+
+      // Hide the dashed guide frame since we have the drop zone
+      const guideFrame = container.querySelector('[style*="dashed rgba(255,255,255,0.3)"]');
+      if (guideFrame) guideFrame.style.display = 'none';
+    }
+  }
+
+  async function handleDroppedFiles(files) {
+    for (const file of files) {
+      if (capturedImages.length >= MAX_IMAGES) break;
+      try {
+        const base64 = await Utils.compressImage(file);
+        capturedImages.push(base64);
+      } catch (e) {
+        console.error('Image compress error:', e);
+      }
+    }
+    updateUI();
   }
 
   function stopCamera() {
