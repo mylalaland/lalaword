@@ -247,6 +247,17 @@ ${paragraphs.map((p, i) => `${i + 1}. ${p}`).join('\n')}
 
   // Test API Key
   async function testApiKey(key) {
+    // First try listing models - simplest & most reliable validation
+    try {
+      const listUrl = `${BASE_URL}/models?key=${key}`;
+      const listResp = await fetch(listUrl);
+      if (listResp.ok) return true;
+      console.warn('[API Key Test] models list failed:', listResp.status, await listResp.text().catch(() => ''));
+    } catch (e) {
+      console.warn('[API Key Test] models list error:', e);
+    }
+
+    // Fallback: try a minimal generateContent call
     const model = Store.get('geminiModel') || 'gemini-2.0-flash';
     const url = `${BASE_URL}/models/${model}:generateContent?key=${key}`;
     try {
@@ -254,12 +265,16 @@ ${paragraphs.map((p, i) => `${i + 1}. ${p}`).join('\n')}
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: 'Say "ok" in JSON: {"status":"ok"}' }] }],
-          generationConfig: { maxOutputTokens: 20, responseMimeType: 'application/json' },
+          contents: [{ parts: [{ text: 'Hi' }] }],
+          generationConfig: { maxOutputTokens: 10 },
         }),
       });
+      if (!response.ok) {
+        console.warn('[API Key Test] generateContent failed:', response.status, await response.text().catch(() => ''));
+      }
       return response.ok;
-    } catch {
+    } catch (e) {
+      console.warn('[API Key Test] generateContent error:', e);
       return false;
     }
   }
