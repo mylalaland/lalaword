@@ -262,20 +262,52 @@ const ScanResultPage = (() => {
       return;
     }
 
-    const wordsToSave = scanData.words.map(w => ({
-      word: w.word,
-      meaning: w.meaning,
-      pos: w.pos,
-      pronunciation: w.pronunciation || '',
-      level: w.level || Store.get('level'),
-      example: w.example || '',
-      exampleMeaning: w.exampleMeaning || '',
-      scanId: scanData.id,
-    }));
+    // Use upsert: add new words, update existing ones
+    const existing = await DB.getAllWords();
+    const existingMap = new Map(existing.map(w => [w.word.toLowerCase(), w]));
 
-    const newCount = await DB.addWords(wordsToSave);
-    await DB.updateTodayStats({ wordsLearned: newCount });
-    Toast.success(`${newCount}개 단어가 단어장에 저장되었어요! 📚 (중복 ${scanData.words.length - newCount}개 제외)`);
+    let addedCount = 0;
+    let updatedCount = 0;
+
+    for (const w of scanData.words) {
+      const key = w.word.toLowerCase();
+      const ex = existingMap.get(key);
+
+      if (ex) {
+        // Already exists — update with latest data (keeps existing mastery/favorite)
+        await DB.updateWord(ex.id, {
+          meaning: w.meaning,
+          pos: w.pos,
+          pronunciation: w.pronunciation || ex.pronunciation || '',
+          example: w.example || ex.example || '',
+          exampleMeaning: w.exampleMeaning || ex.exampleMeaning || '',
+          level: w.level || ex.level,
+        });
+        updatedCount++;
+      } else {
+        // Truly new word
+        await DB.addWords([{
+          word: w.word,
+          meaning: w.meaning,
+          pos: w.pos,
+          pronunciation: w.pronunciation || '',
+          level: w.level || Store.get('level'),
+          example: w.example || '',
+          exampleMeaning: w.exampleMeaning || '',
+          scanId: scanData.id,
+        }]);
+        addedCount++;
+      }
+    }
+
+    if (addedCount > 0) {
+      await DB.updateTodayStats({ wordsLearned: addedCount });
+    }
+
+    const parts = [];
+    if (addedCount > 0) parts.push(`${addedCount}개 새 단어 추가`);
+    if (updatedCount > 0) parts.push(`${updatedCount}개 업데이트`);
+    Toast.success(`단어장에 저장 완료! ${parts.join(', ')} 📚`);
   }
 
   async function saveToList() {

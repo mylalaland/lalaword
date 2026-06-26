@@ -8,6 +8,12 @@ const FlashcardPage = (() => {
   let isFlipped = false;
   let results = [];
 
+  // Touch/swipe state
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchDeltaX = 0;
+  let isDragging = false;
+
   async function render() {
     const page = document.getElementById('page-flashcard');
     if (!page) return;
@@ -52,14 +58,24 @@ const FlashcardPage = (() => {
           <div class="progress-fill" style="width:${Utils.percentage(currentIndex + 1, words.length)}%;transition:width 300ms;"></div>
         </div>
 
-        <!-- Card -->
-        <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;">
-          <div id="flashcard" onclick="FlashcardPage.flip()"
+        <!-- Card area with swipe -->
+        <div id="flashcard-area" style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden;user-select:none;">
+          <!-- Prev button -->
+          <button id="fc-prev-btn" onclick="FlashcardPage.prev()" 
+            style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;
+            border-radius:50%;background:var(--color-bg-warm);border:1.5px solid var(--color-border-light);
+            font-size:16px;display:flex;align-items:center;justify-content:center;z-index:10;
+            opacity:${currentIndex > 0 ? '1' : '0.2'};pointer-events:${currentIndex > 0 ? 'auto' : 'none'};
+            cursor:pointer;transition:opacity 200ms;">
+            ◀
+          </button>
+
+          <div id="flashcard" 
             style="width:100%;max-width:340px;min-height:280px;background:var(--color-white);
             border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,0.08);padding:32px;
             display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
-            cursor:pointer;transition:transform 300ms ease;
-            ${isFlipped ? 'transform:rotateY(0deg);' : ''}">
+            cursor:pointer;transition:transform 200ms ease, opacity 200ms ease;
+            touch-action:pan-y;">
 
             ${!isFlipped ? `
               <!-- Front: Word -->
@@ -73,7 +89,7 @@ const FlashcardPage = (() => {
               <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();SpeechService.speak('${w.word}')">
                 🔊 발음 듣기
               </button>
-              <div style="margin-top:24px;font-size:12px;color:var(--color-text-hint);">탭하면 뜻이 보여요</div>
+              <div style="margin-top:24px;font-size:12px;color:var(--color-text-hint);">탭하면 뜻이 보여요 · 좌우로 스와이프</div>
             ` : `
               <!-- Back: Meaning -->
               <div style="font-family:var(--font-en);font-size:22px;font-weight:700;color:var(--color-text-muted);margin-bottom:12px;">
@@ -91,11 +107,20 @@ const FlashcardPage = (() => {
               ` : ''}
             `}
           </div>
+
+          <!-- Next button -->
+          <button id="fc-next-btn" onclick="FlashcardPage.next()"
+            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;
+            border-radius:50%;background:var(--color-bg-warm);border:1.5px solid var(--color-border-light);
+            font-size:16px;display:flex;align-items:center;justify-content:center;z-index:10;
+            cursor:pointer;transition:opacity 200ms;">
+            ▶
+          </button>
         </div>
 
         <!-- Rating buttons (only when flipped) -->
         ${isFlipped ? `
-          <div style="padding:16px 24px 32px;display:flex;gap:10px;">
+          <div style="padding:12px 24px 8px;display:flex;gap:10px;">
             <button onclick="FlashcardPage.rate(1)" class="btn btn-block"
               style="background:var(--color-rose-light);color:var(--color-rose);flex:1;">
               ❌ 몰라요
@@ -113,6 +138,11 @@ const FlashcardPage = (() => {
               ⭐ 완벽!
             </button>
           </div>
+          <div style="padding:4px 24px 24px;text-align:center;">
+            <button class="btn btn-ghost btn-sm" onclick="FlashcardPage.next()" style="font-size:12px;color:var(--color-text-hint);">
+              평가 없이 넘기기 →
+            </button>
+          </div>
         ` : `
           <div style="padding:16px 24px 32px;text-align:center;">
             <div style="font-size:13px;color:var(--color-text-hint);">카드를 탭해서 뜻을 확인하세요</div>
@@ -120,12 +150,138 @@ const FlashcardPage = (() => {
         `}
       </div>
     `;
+
+    // Setup swipe handlers
+    setupSwipe();
+  }
+
+  function setupSwipe() {
+    const card = document.getElementById('flashcard');
+    const area = document.getElementById('flashcard-area');
+    if (!card || !area) return;
+
+    // Click to flip (only if not swiping)
+    card.addEventListener('click', (e) => {
+      if (Math.abs(touchDeltaX) < 10) {
+        flip();
+      }
+    });
+
+    // Touch events
+    area.addEventListener('touchstart', onTouchStart, { passive: true });
+    area.addEventListener('touchmove', onTouchMove, { passive: false });
+    area.addEventListener('touchend', onTouchEnd, { passive: true });
+
+    // Mouse events (for PC)
+    area.addEventListener('mousedown', onMouseDown);
+    area.addEventListener('mousemove', onMouseMove);
+    area.addEventListener('mouseup', onMouseEnd);
+    area.addEventListener('mouseleave', onMouseEnd);
+  }
+
+  function onTouchStart(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchDeltaX = 0;
+    isDragging = true;
+  }
+
+  function onTouchMove(e) {
+    if (!isDragging) return;
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    
+    // Only swipe horizontally
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      e.preventDefault();
+      touchDeltaX = dx;
+      const card = document.getElementById('flashcard');
+      if (card) {
+        const rotate = dx * 0.05;
+        card.style.transform = `translateX(${dx}px) rotate(${rotate}deg)`;
+        card.style.opacity = Math.max(0.5, 1 - Math.abs(dx) / 400);
+      }
+    }
+  }
+
+  function onTouchEnd() {
+    finishSwipe();
+  }
+
+  function onMouseDown(e) {
+    touchStartX = e.clientX;
+    touchDeltaX = 0;
+    isDragging = true;
+    e.preventDefault();
+  }
+
+  function onMouseMove(e) {
+    if (!isDragging) return;
+    const dx = e.clientX - touchStartX;
+    touchDeltaX = dx;
+    const card = document.getElementById('flashcard');
+    if (card && Math.abs(dx) > 5) {
+      const rotate = dx * 0.05;
+      card.style.transform = `translateX(${dx}px) rotate(${rotate}deg)`;
+      card.style.opacity = Math.max(0.5, 1 - Math.abs(dx) / 400);
+    }
+  }
+
+  function onMouseEnd() {
+    if (isDragging) finishSwipe();
+  }
+
+  function finishSwipe() {
+    isDragging = false;
+    const card = document.getElementById('flashcard');
+    const threshold = 80;
+
+    if (Math.abs(touchDeltaX) > threshold) {
+      // Animate card off screen
+      if (card) {
+        const dir = touchDeltaX > 0 ? 1 : -1;
+        card.style.transition = 'transform 200ms ease, opacity 200ms ease';
+        card.style.transform = `translateX(${dir * 400}px) rotate(${dir * 15}deg)`;
+        card.style.opacity = '0';
+      }
+      setTimeout(() => {
+        if (touchDeltaX > threshold) {
+          // Swipe right → previous
+          prev();
+        } else {
+          // Swipe left → next
+          next();
+        }
+      }, 180);
+    } else {
+      // Snap back
+      if (card) {
+        card.style.transition = 'transform 200ms ease, opacity 200ms ease';
+        card.style.transform = '';
+        card.style.opacity = '1';
+      }
+    }
+    touchDeltaX = 0;
   }
 
   function flip() {
     isFlipped = !isFlipped;
     Utils.vibrate(5);
     renderCard();
+  }
+
+  function next() {
+    currentIndex++;
+    isFlipped = false;
+    renderCard();
+  }
+
+  function prev() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      isFlipped = false;
+      renderCard();
+    }
   }
 
   async function rate(quality) {
@@ -142,9 +298,7 @@ const FlashcardPage = (() => {
     }
 
     Utils.vibrate(10);
-    currentIndex++;
-    isFlipped = false;
-    renderCard();
+    next();
   }
 
   function renderComplete() {
@@ -184,5 +338,5 @@ const FlashcardPage = (() => {
     `;
   }
 
-  return { render, flip, rate };
+  return { render, flip, rate, next, prev };
 })();

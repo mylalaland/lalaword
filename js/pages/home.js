@@ -42,11 +42,11 @@ const HomePage = (() => {
 
       <!-- Stats Row -->
       <div class="grid-3 mb-lg stagger" style="animation-delay:100ms;">
-        <div class="stat-card anim-scale-in">
+        <div class="stat-card anim-scale-in" onclick="Router.navigate('/vocabulary')" style="cursor:pointer;" title="단어장 보기">
           <div class="stat-value">${wordCount}</div>
           <div class="stat-label">총 단어</div>
         </div>
-        <div class="stat-card anim-scale-in">
+        <div class="stat-card anim-scale-in" onclick="HomePage.showTodayWords()" style="cursor:pointer;" title="오늘 학습한 단어 보기">
           <div class="stat-value" style="color:var(--color-teal)">${todayStats.wordsLearned}</div>
           <div class="stat-label">오늘 학습</div>
         </div>
@@ -174,5 +174,37 @@ const HomePage = (() => {
     }
   }
 
-  return { render };
+  async function showTodayWords() {
+    const today = new Date().toISOString().slice(0, 10);
+    const allWords = await DB.getAllWords();
+    const todayWords = allWords.filter(w => w.addedAt && w.addedAt.startsWith(today));
+
+    if (todayWords.length === 0) {
+      Toast.info('오늘 학습한 단어가 아직 없어요 📖');
+      return;
+    }
+
+    const content = document.createElement('div');
+    content.style.cssText = 'max-height:400px;overflow-y:auto;';
+    content.innerHTML = todayWords.map(w => `
+      <div class="list-item" onclick="SpeechService.speak('${w.word}')" style="cursor:pointer;">
+        <div class="list-content">
+          <div class="list-title" style="font-family:var(--font-en);font-weight:700;">${w.word}</div>
+          <div class="list-desc">${w.meaning}</div>
+        </div>
+        <div class="list-right" style="font-size:14px;">🔊</div>
+      </div>
+    `).join('');
+
+    Modal.show({
+      title: `📚 오늘 학습한 단어 (${todayWords.length}개)`,
+      content,
+      actions: [
+        { id: 'vocab', label: '단어장에서 보기', primary: true, onClick: () => Router.navigate('/vocabulary') },
+        { id: 'close', label: '닫기' },
+      ],
+    });
+  }
+
+  return { render, showTodayWords };
 })();
