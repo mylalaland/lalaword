@@ -492,6 +492,12 @@ const QuizPage = (() => {
       correct,
       types: quizConfig.types.join(','),
       scope: quizConfig.scope,
+      answers: answers.map(a => ({
+        word: a.word,
+        meaning: a.meaning,
+        correct: a.correct,
+        userAnswer: a.userAnswer || null,
+      })),
     });
     await DB.updateTodayStats({ wordsReviewed: answers.length });
   }

@@ -278,23 +278,39 @@ const RecordsPage = (() => {
       return;
     }
 
-    container.innerHTML = results.map(r => {
+    // Store results for detail view
+    window._quizResults = results;
+
+    container.innerHTML = results.map((r, idx) => {
       const correct = r.correct ?? r.correctCount ?? 0;
       const total = r.total ?? r.totalQuestions ?? 1;
       const pct = Utils.percentage(correct, total);
+
+      // Format date + time
+      let dateTimeStr = Utils.formatDate(r.date);
+      if (r.createdAt) {
+        const dt = new Date(r.createdAt);
+        const hh = String(dt.getHours()).padStart(2, '0');
+        const mm = String(dt.getMinutes()).padStart(2, '0');
+        dateTimeStr = `${Utils.formatDate(r.date)} ${hh}:${mm}`;
+      }
+
       return `
-        <div class="card mb-xs">
+        <div class="card mb-xs" onclick="RecordsPage.showQuizDetail(${idx})" style="cursor:pointer;">
           <div class="flex-between">
             <div>
               <div style="font-size:14px;font-weight:600;">
                 ${correct}/${total} 정답
                 ${correct === total ? ' 🎉' : ''}
               </div>
-              <div style="font-size:12px;color:var(--color-text-muted);">${Utils.formatDate(r.date)}</div>
+              <div style="font-size:12px;color:var(--color-text-muted);">${dateTimeStr}</div>
             </div>
-            <div style="font-family:var(--font-en);font-size:18px;font-weight:800;
-              color:${pct >= 80 ? 'var(--color-green)' : 'var(--color-amber)'};">
-              ${pct}%
+            <div class="flex-row gap-sm" style="align-items:center;">
+              <div style="font-family:var(--font-en);font-size:18px;font-weight:800;
+                color:${pct >= 80 ? 'var(--color-green)' : 'var(--color-amber)'};">
+                ${pct}%
+              </div>
+              <div style="font-size:14px;color:var(--color-text-hint);">→</div>
             </div>
           </div>
         </div>
@@ -340,5 +356,69 @@ const RecordsPage = (() => {
     });
   }
 
-  return { render, prevMonth, nextMonth, setChartTab, showDayDetail };
+  function showQuizDetail(idx) {
+    const results = window._quizResults;
+    if (!results || !results[idx]) return;
+    const r = results[idx];
+    const correct = r.correct ?? r.correctCount ?? 0;
+    const total = r.total ?? r.totalQuestions ?? 1;
+    const answers = r.answers || [];
+
+    let dateTimeStr = Utils.formatDate(r.date);
+    if (r.createdAt) {
+      const dt = new Date(r.createdAt);
+      const hh = String(dt.getHours()).padStart(2, '0');
+      const mm = String(dt.getMinutes()).padStart(2, '0');
+      dateTimeStr = `${Utils.formatDate(r.date)} ${hh}:${mm}`;
+    }
+
+    const content = document.createElement('div');
+
+    let html = `
+      <div style="display:flex;justify-content:center;gap:16px;margin-bottom:16px;">
+        <div class="stat-card" style="flex:1;">
+          <div class="stat-value" style="color:var(--color-green);">${correct}</div>
+          <div class="stat-label">정답</div>
+        </div>
+        <div class="stat-card" style="flex:1;">
+          <div class="stat-value" style="color:var(--color-rose);">${total - correct}</div>
+          <div class="stat-label">오답</div>
+        </div>
+        <div class="stat-card" style="flex:1;">
+          <div class="stat-value">${Utils.percentage(correct, total)}%</div>
+          <div class="stat-label">정답률</div>
+        </div>
+      </div>
+    `;
+
+    if (answers.length > 0) {
+      html += `<div style="max-height:300px;overflow-y:auto;">`;
+      html += answers.map((a, i) => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 8px;
+          border-bottom:1px solid var(--color-border-light);">
+          <div style="font-size:18px;flex-shrink:0;">${a.correct ? '✅' : '❌'}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:var(--font-en);font-weight:700;font-size:15px;">${a.word}</div>
+            <div style="font-size:12px;color:var(--color-text-muted);">${a.meaning || ''}</div>
+          </div>
+          <button class="btn-icon sm" onclick="SpeechService.speak('${a.word}')" style="flex-shrink:0;">🔊</button>
+        </div>
+      `).join('');
+      html += `</div>`;
+    } else {
+      html += `<div style="text-align:center;color:var(--color-text-muted);font-size:13px;padding:16px;">
+        이전 버전에서 저장된 퀴즈라 단어 상세 정보가 없어요
+      </div>`;
+    }
+
+    content.innerHTML = html;
+
+    Modal.show({
+      title: `📝 퀴즈 상세 — ${dateTimeStr}`,
+      content,
+      actions: [{ id: 'close', label: '닫기', primary: true }],
+    });
+  }
+
+  return { render, prevMonth, nextMonth, setChartTab, showDayDetail, showQuizDetail };
 })();

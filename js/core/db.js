@@ -266,6 +266,7 @@ const DB = (() => {
     return db.quizResults.add({
       ...result,
       date: new Date().toISOString().slice(0, 10),
+      createdAt: new Date().toISOString(),
     });
   }
 
