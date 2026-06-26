@@ -486,6 +486,9 @@ const SettingsPage = (() => {
       <input class="input-field mb-sm" placeholder="🔍 모델 검색..." id="model-search"
         oninput="SettingsPage.filterModels(this.value)"
         style="margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px;padding:0 4px;">
+        ⭐ 추천 모델은 안정적으로 작동이 확인된 모델이에요. 클릭하면 테스트 후 변경돼요.
+      </div>
       <div id="model-list-container" style="max-height:360px;overflow-y:auto;">
         ${models.map(m => `
           <div class="model-item list-item" data-id="${m.id}" data-name="${m.name.toLowerCase()}"
@@ -493,7 +496,10 @@ const SettingsPage = (() => {
             style="cursor:pointer;border-radius:10px;margin-bottom:4px;padding:10px 8px;
               ${m.id === currentModel ? 'background:var(--color-coral-50);border:1.5px solid var(--color-coral-100);' : ''}">
             <div class="list-content" style="min-width:0;">
-              <div class="list-title" style="font-size:13px;font-family:var(--font-mono);word-break:break-all;">${m.id}</div>
+              <div class="list-title" style="font-size:13px;font-family:var(--font-mono);word-break:break-all;">
+                ${m.id}
+                ${m.recommended ? '<span style="display:inline-block;background:var(--color-coral);color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:6px;font-family:var(--font-primary);vertical-align:middle;">⭐ 추천</span>' : ''}
+              </div>
               <div class="list-desc" style="font-size:11px;">${m.name}</div>
             </div>
             ${m.id === currentModel ? '<div style="color:var(--color-coral);font-weight:700;">✓</div>' : ''}
@@ -503,7 +509,6 @@ const SettingsPage = (() => {
     `;
 
     Modal.show({ title: '🤖 AI 모델 선택', content });
-    // Store models globally for filtering
     window._geminiModels = models;
   }
 
@@ -516,11 +521,49 @@ const SettingsPage = (() => {
     });
   }
 
-  function selectModel(modelId) {
-    Store.set('geminiModel', modelId);
-    Modal.close();
-    Toast.success(`모델이 변경되었어요: ${modelId}`);
-    render();
+  async function selectModel(modelId) {
+    const apiKey = Store.get('apiKey');
+    const currentModel = Store.get('geminiModel') || 'gemini-2.0-flash';
+    if (modelId === currentModel) {
+      Modal.close();
+      return;
+    }
+
+    // Visually mark the clicked item
+    document.querySelectorAll('.model-item').forEach(item => {
+      if (item.dataset.id === modelId) {
+        item.style.opacity = '0.6';
+        item.style.pointerEvents = 'none';
+      }
+    });
+
+    Loading.show(`${modelId} 테스트 중...`);
+    const result = await GeminiAPI.testModel(apiKey, modelId);
+    Loading.hide();
+
+    if (result.ok) {
+      Store.set('geminiModel', modelId);
+      Modal.close();
+      Toast.success(`모델 변경 완료! → ${modelId} ✅`);
+      render();
+    } else {
+      // Restore item
+      document.querySelectorAll('.model-item').forEach(item => {
+        if (item.dataset.id === modelId) {
+          item.style.opacity = '1';
+          item.style.pointerEvents = '';
+        }
+      });
+
+      let reason = '알 수 없는 오류';
+      if (result.status === 404) reason = '이 모델은 존재하지 않아요';
+      else if (result.status === 400) reason = '이 모델은 현재 요청을 지원하지 않아요';
+      else if (result.status === 403) reason = '이 모델에 대한 접근 권한이 없어요';
+      else if (result.status === 429) reason = '요청 한도 초과 — 잠시 후 다시 시도해주세요';
+      else if (result.status === 503) reason = '모델이 일시적으로 사용 불가해요';
+
+      Toast.error(`${modelId} 사용 불가 ❌ — ${reason}`);
+    }
   }
 
   return {

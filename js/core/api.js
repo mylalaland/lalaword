@@ -279,25 +279,69 @@ ${paragraphs.map((p, i) => `${i + 1}. ${p}`).join('\n')}
     }
   }
 
+  // Test a specific model with a simple call
+  async function testModel(apiKey, modelId) {
+    const url = `${BASE_URL}/models/${modelId}:generateContent?key=${apiKey}`;
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: 'Say hello' }] }],
+          generationConfig: { maxOutputTokens: 10 },
+        }),
+      });
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        console.warn(`[Model Test] ${modelId} failed:`, response.status, errText);
+        return { ok: false, status: response.status, error: errText };
+      }
+      return { ok: true };
+    } catch (e) {
+      console.warn(`[Model Test] ${modelId} error:`, e);
+      return { ok: false, status: 0, error: e.message };
+    }
+  }
+
+  // Recommended models that are known to work well
+  const RECOMMENDED_MODELS = [
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+  ];
+
   // List available models
   async function listModels(apiKey) {
     try {
       const response = await fetch(`${BASE_URL}/models?key=${apiKey}`);
       if (!response.ok) return [];
       const data = await response.json();
-      return (data.models || []).filter(m =>
+      const all = (data.models || []).filter(m =>
         m.name && m.supportedGenerationMethods?.includes('generateContent')
-      ).map(m => ({
-        id: m.name.replace('models/', ''),
-        name: m.displayName || m.name.replace('models/', ''),
-        description: m.description || '',
-        inputLimit: m.inputTokenLimit,
-        outputLimit: m.outputTokenLimit,
-      }));
+      ).map(m => {
+        const id = m.name.replace('models/', '');
+        return {
+          id,
+          name: m.displayName || id,
+          description: m.description || '',
+          inputLimit: m.inputTokenLimit,
+          outputLimit: m.outputTokenLimit,
+          recommended: RECOMMENDED_MODELS.some(r => id.startsWith(r)),
+        };
+      });
+      // Sort: recommended first, then alphabetical
+      all.sort((a, b) => {
+        if (a.recommended !== b.recommended) return a.recommended ? -1 : 1;
+        return a.id.localeCompare(b.id);
+      });
+      return all;
     } catch {
       return [];
     }
   }
 
-  return { extractText, extractTextBatch, analyzeWords, translateSentences, testApiKey, listModels, call };
+  return { extractText, extractTextBatch, analyzeWords, translateSentences, testApiKey, testModel, listModels, call };
 })();
