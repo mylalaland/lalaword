@@ -22,13 +22,13 @@
   transform: translateX(-50%);
   width: 100%;
   max-width: var(--content-max-width);
-  height: var(--header-height);
+  height: calc(var(--header-height) + var(--safe-area-top));
   background: var(--color-white);
   border-bottom: 1px solid var(--color-border-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-md);
+  padding: var(--safe-area-top) var(--space-md) 0 var(--space-md);
   z-index: var(--z-sticky);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -67,7 +67,7 @@
 /* === Page Content === */
 .page {
   flex: 1;
-  padding-top: var(--header-height);
+  padding-top: calc(var(--header-height) + var(--safe-area-top));
   padding-bottom: calc(var(--tab-bar-height) + var(--safe-area-bottom) + var(--space-md));
   min-height: 100vh;
   display: none;

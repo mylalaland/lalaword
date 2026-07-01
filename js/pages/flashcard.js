@@ -43,7 +43,7 @@ const FlashcardPage = (() => {
     const levelInfo = Utils.getLevelInfo(w.level || 3);
 
     page.querySelector('.page-content').innerHTML = `
-      <div style="min-height:100vh;display:flex;flex-direction:column;background:var(--color-bg);">
+      <div style="min-height:calc(100vh - var(--header-height) - var(--tab-bar-height) - var(--safe-area-top) - var(--safe-area-bottom) - 32px);display:flex;flex-direction:column;background:var(--color-bg);margin:-16px;border-radius:16px;">
         <!-- Top bar -->
         <div style="padding:16px;display:flex;justify-content:space-between;align-items:center;">
           <button onclick="Router.navigate('/vocabulary')" style="font-size:18px;">←</button>
@@ -118,36 +118,34 @@ const FlashcardPage = (() => {
           </button>
         </div>
 
-        <!-- Rating buttons (only when flipped) -->
-        ${isFlipped ? `
-          <div style="padding:12px 24px 8px;display:flex;gap:10px;max-width:400px;margin:0 auto;width:100%;box-sizing:border-box;">
-            <button onclick="FlashcardPage.rate(1)" class="btn btn-block"
-              style="background:var(--color-rose-light);color:var(--color-rose);flex:1;min-width:0;">
-              ❌ 몰라요
-            </button>
-            <button onclick="FlashcardPage.rate(3)" class="btn btn-block"
-              style="background:var(--color-amber-light);color:var(--color-amber);flex:1;min-width:0;">
-              🤔 헷갈려요
-            </button>
-            <button onclick="FlashcardPage.rate(4)" class="btn btn-block"
-              style="background:var(--color-teal-light);color:var(--color-teal);flex:1;min-width:0;">
-              😊 알아요
-            </button>
-            <button onclick="FlashcardPage.rate(5)" class="btn btn-block"
-              style="background:var(--color-sky-light);color:var(--color-sky);flex:1;min-width:0;">
-              ⭐ 완벽!
-            </button>
-          </div>
-          <div style="padding:4px 24px 24px;text-align:center;">
+        <!-- Rating buttons (always visible to prevent layout shift) -->
+        <div style="padding:0 24px 8px;display:flex;gap:10px;max-width:400px;margin:0 auto;width:100%;box-sizing:border-box;">
+          <button onclick="FlashcardPage.rate(1)" class="btn btn-block"
+            style="background:var(--color-rose-light);color:var(--color-rose);flex:1;min-width:0;padding:12px 4px;font-size:14px;">
+            ❌ 몰라요
+          </button>
+          <button onclick="FlashcardPage.rate(3)" class="btn btn-block"
+            style="background:var(--color-amber-light);color:var(--color-amber);flex:1;min-width:0;padding:12px 4px;font-size:14px;">
+            🤔 헷갈려요
+          </button>
+          <button onclick="FlashcardPage.rate(4)" class="btn btn-block"
+            style="background:var(--color-teal-light);color:var(--color-teal);flex:1;min-width:0;padding:12px 4px;font-size:14px;">
+            😊 알아요
+          </button>
+          <button onclick="FlashcardPage.rate(5)" class="btn btn-block"
+            style="background:var(--color-sky-light);color:var(--color-sky);flex:1;min-width:0;padding:12px 4px;font-size:14px;">
+            ⭐ 완벽!
+          </button>
+        </div>
+        <div style="padding:4px 24px 24px;text-align:center;min-height:36px;">
+          ${!isFlipped ? `
+            <div style="font-size:13px;color:var(--color-text-hint);padding:6px 0;">카드를 탭해서 뜻을 확인하세요</div>
+          ` : `
             <button class="btn btn-ghost btn-sm" onclick="FlashcardPage.next()" style="font-size:12px;color:var(--color-text-hint);">
               평가 없이 넘기기 →
             </button>
-          </div>
-        ` : `
-          <div style="padding:16px 24px 32px;text-align:center;">
-            <div style="font-size:13px;color:var(--color-text-hint);">카드를 탭해서 뜻을 확인하세요</div>
-          </div>
-        `}
+          `}
+        </div>
       </div>
     `;
 
